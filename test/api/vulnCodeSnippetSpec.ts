@@ -38,8 +38,10 @@ describe('snippets/verdict', () => {
 
   beforeEach(done => {
     socket = io('http://localhost:3000', {
+      reconnection: false,
       reconnectionDelay: 0,
-      forceNew: true
+      forceNew: true,
+      transports: ['websocket']
     })
     socket.on('connect', () => {
       done()
@@ -48,7 +50,11 @@ describe('snippets/verdict', () => {
 
   afterEach(done => {
     if (socket.connected) {
+      socket.once('disconnect', () => {
+        done()
+      })
       socket.disconnect()
+      return
     }
     done()
   })

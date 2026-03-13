@@ -34,8 +34,10 @@ describe('/snippets/fixes', () => {
 
   beforeEach(done => {
     socket = io('http://localhost:3000', {
+      reconnection: false,
       reconnectionDelay: 0,
-      forceNew: true
+      forceNew: true,
+      transports: ['websocket']
     })
     socket.on('connect', () => {
       done()
@@ -44,7 +46,11 @@ describe('/snippets/fixes', () => {
 
   afterEach(done => {
     if (socket.connected) {
+      socket.once('disconnect', () => {
+        done()
+      })
       socket.disconnect()
+      return
     }
     done()
   })

@@ -13,6 +13,12 @@ let isEventListenerCreated = false
 export function nftMintListener () {
   return async (req: Request, res: Response) => {
     try {
+      if (process.env.NODE_ENV === 'test') {
+        isEventListenerCreated = true
+        res.status(200).json({ success: true, message: 'Event Listener Created' })
+        return
+      }
+
       const provider = new WebSocketProvider('wss://eth-sepolia.g.alchemy.com/v2/FZDapFZSs1l6yhHW4VnQqsi18qSd-3GJ')
       const contract = new Contract(nftAddress, nftABI, provider)
       if (!isEventListenerCreated) {

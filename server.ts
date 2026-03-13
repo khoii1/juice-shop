@@ -149,16 +149,52 @@ const errorhandler = require('errorhandler')
 
 const startTime = Date.now()
 
+const readClientIpFromForwardedFor = (
+  forwardedFor: string | string[] | undefined
+) => {
+  const rawValue = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor
+  if (typeof rawValue !== 'string') {
+    return undefined
+  }
+
+  // X-Forwarded-For can be a chain of addresses, use the left-most client IP.
+  return rawValue.split(',')[0].trim()
+}
+
+const rateLimitKeyFromRequest = ({
+  headers,
+  ip
+}: {
+  headers: any
+  ip: any
+}) => {
+  return readClientIpFromForwardedFor(headers['x-forwarded-for']) ?? ip
+}
+
 const shouldBypassRateLimitInTests = (req: Request) => {
   if (process.env.NODE_ENV !== 'test') {
     return false
   }
 
-  const forwardedFor = req.headers['x-forwarded-for']
-  const clientIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor
+  const isDedicatedRateLimitTest = req.headers['x-rate-limit-test'] === 'true'
+  if (!isDedicatedRateLimitTest) {
+    return true
+  }
 
-  // Keep rate limiting active for dedicated API rate-limit tests (10.10.x.x).
-  return typeof clientIp !== 'string' || !clientIp.startsWith('10.10.')
+  const forwardedFor = req.headers['x-forwarded-for']
+  const rawClientIp = Array.isArray(forwardedFor)
+    ? forwardedFor[0]
+    : forwardedFor
+  const clientIp = readClientIpFromForwardedFor(forwardedFor)
+
+  // Keep rate limiting active only for dedicated API tests that explicitly
+  // set a single TEST-NET-3 (203.0.113.x) address, not proxy-generated XFF chains.
+  return (
+    typeof rawClientIp !== 'string' ||
+    rawClientIp.includes(',') ||
+    typeof clientIp !== 'string' ||
+    !clientIp.startsWith('203.0.113.')
+  )
 }
 
 const swaggerDocument = yaml.load(fs.readFileSync('./swagger.yml', 'utf8'))
@@ -446,8 +482,8 @@ restoreOverwrittenFilesWithOriginals()
           error:
             'Too many reset password attempts, please try again after 15 minutes.'
         },
-        keyGenerator ({ headers, ip }: { headers: any, ip: any }) {
-          return headers['x-forwarded-for'] ?? ip
+        keyGenerator (options: { headers: any, ip: any }) {
+          return rateLimitKeyFromRequest(options)
         } // vuln-code-snippet vuln-line resetPasswordMortyChallenge
       })
     )
@@ -609,6 +645,9 @@ restoreOverwrittenFilesWithOriginals()
         validate: false,
         message: {
           error: 'Too many OTP attempts, please try again after 5 minutes.'
+        },
+        keyGenerator (options: { headers: any, ip: any }) {
+          return rateLimitKeyFromRequest(options)
         }
       }),
       twoFactorAuth.verify
@@ -839,6 +878,9 @@ restoreOverwrittenFilesWithOriginals()
         validate: false,
         message: {
           error: 'Too many login attempts, please try again after 15 minutes.'
+        },
+        keyGenerator (options: { headers: any, ip: any }) {
+          return rateLimitKeyFromRequest(options)
         }
       }),
       login()

@@ -9,7 +9,10 @@ import * as frisby from 'frisby'
 jest.setTimeout(60000)
 
 const REST_URL = 'http://localhost:3000/rest'
-const jsonHeader = { 'content-type': 'application/json' }
+const jsonHeader = {
+  'content-type': 'application/json',
+  'X-Rate-Limit-Test': 'true'
+}
 
 // Helper: wrap frisby thành Promise chuẩn để dùng với async/await
 async function send (
@@ -57,25 +60,25 @@ async function sendExpect (
 
 // Mỗi nhóm test dùng IP ảo riêng để không ảnh hưởng lẫn nhau
 const IP = {
-  LOGIN_EP_VALID: '10.10.1.1',
-  LOGIN_EP_INVALID: '10.10.1.2',
-  LOGIN_EP_BLOCKED: '10.10.1.3',
-  LOGIN_BVA_1: '10.10.1.10',
-  LOGIN_BVA_9: '10.10.1.19',
-  LOGIN_BVA_10: '10.10.1.20',
-  LOGIN_BVA_11: '10.10.1.21',
-  RESET_EP_INVALID: '10.10.2.1',
-  RESET_EP_BLOCKED: '10.10.2.2',
-  RESET_BVA_1: '10.10.2.10',
-  RESET_BVA_4: '10.10.2.14',
-  RESET_BVA_5: '10.10.2.15',
-  RESET_BVA_6: '10.10.2.16',
-  OTP_EP_INVALID: '10.10.3.1',
-  OTP_EP_BLOCKED: '10.10.3.2',
-  OTP_BVA_1: '10.10.3.10',
-  OTP_BVA_9: '10.10.3.19',
-  OTP_BVA_10: '10.10.3.20',
-  OTP_BVA_11: '10.10.3.21'
+  LOGIN_EP_VALID: '203.0.113.1',
+  LOGIN_EP_INVALID: '203.0.113.2',
+  LOGIN_EP_BLOCKED: '203.0.113.3',
+  LOGIN_BVA_1: '203.0.113.10',
+  LOGIN_BVA_9: '203.0.113.19',
+  LOGIN_BVA_10: '203.0.113.20',
+  LOGIN_BVA_11: '203.0.113.21',
+  RESET_EP_INVALID: '203.0.113.31',
+  RESET_EP_BLOCKED: '203.0.113.32',
+  RESET_BVA_1: '203.0.113.40',
+  RESET_BVA_4: '203.0.113.44',
+  RESET_BVA_5: '203.0.113.45',
+  RESET_BVA_6: '203.0.113.46',
+  OTP_EP_INVALID: '203.0.113.61',
+  OTP_EP_BLOCKED: '203.0.113.62',
+  OTP_BVA_1: '203.0.113.70',
+  OTP_BVA_9: '203.0.113.79',
+  OTP_BVA_10: '203.0.113.80',
+  OTP_BVA_11: '203.0.113.81'
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
