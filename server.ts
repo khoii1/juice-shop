@@ -149,8 +149,17 @@ const errorhandler = require('errorhandler')
 
 const startTime = Date.now()
 
-const shouldBypassRateLimitInTests = (req: Request) =>
-  process.env.NODE_ENV === 'test' && req.headers['x-forwarded-for'] == null
+const shouldBypassRateLimitInTests = (req: Request) => {
+  if (process.env.NODE_ENV !== 'test') {
+    return false
+  }
+
+  const forwardedFor = req.headers['x-forwarded-for']
+  const clientIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor
+
+  // Keep rate limiting active for dedicated API rate-limit tests (10.10.x.x).
+  return typeof clientIp !== 'string' || !clientIp.startsWith('10.10.')
+}
 
 const swaggerDocument = yaml.load(fs.readFileSync('./swagger.yml', 'utf8'))
 
