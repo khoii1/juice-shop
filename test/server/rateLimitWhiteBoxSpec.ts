@@ -14,15 +14,13 @@ const keyGenerator = ({
 }: {
   headers: Record<string, string | undefined>;
   ip: string;
-}): string => {
-  return headers["X-Forwarded-For"] ?? ip;
-};
+}): string => headers["x-forwarded-for"] ?? ip;
 
 // Nhóm 1: keyGenerator – lỗ hổng bypass rate limit tại /rest/user/reset-password
 describe("keyGenerator (rate limit bypass vulnerability)", () => {
   it("WB1 – Có X-Forwarded-For → dùng header, bỏ qua IP thật", () => {
     const result = keyGenerator({
-      headers: { "X-Forwarded-For": "1.2.3.4" },
+      headers: { "x-forwarded-for": "1.2.3.4" },
       ip: "9.9.9.9",
     });
     expect(result).to.equal("1.2.3.4");
@@ -35,7 +33,7 @@ describe("keyGenerator (rate limit bypass vulnerability)", () => {
 
   it("WB3 – X-Forwarded-For là undefined → dùng IP thật", () => {
     const result = keyGenerator({
-      headers: { "X-Forwarded-For": undefined },
+      headers: { "x-forwarded-for": undefined },
       ip: "9.9.9.9",
     });
     expect(result).to.equal("9.9.9.9");
@@ -43,11 +41,11 @@ describe("keyGenerator (rate limit bypass vulnerability)", () => {
 
   it("WB4 – Hai giá trị X-Forwarded-For khác nhau → rate limiter coi là 2 IP khác nhau", () => {
     const ip1 = keyGenerator({
-      headers: { "X-Forwarded-For": "10.0.0.1" },
+      headers: { "x-forwarded-for": "10.0.0.1" },
       ip: "9.9.9.9",
     });
     const ip2 = keyGenerator({
-      headers: { "X-Forwarded-For": "10.0.0.2" },
+      headers: { "x-forwarded-for": "10.0.0.2" },
       ip: "9.9.9.9",
     });
     expect(ip1).to.not.equal(ip2);
@@ -77,7 +75,7 @@ describe("resetPassword() – branch coverage", () => {
   it("WB5 – Thiếu email và answer → next(Error)", () => {
     req.body = { new: "NewPass1!", repeat: "NewPass1!" };
     resetPassword()(req, res, next);
-    expect(next).to.have.been.calledOnce;
+    expect(next.calledOnce).to.equal(true);
     expect(next.args[0][0]).to.be.instanceOf(Error);
     expect(next.args[0][0].message).to.include("Blocked illegal activity");
   });
@@ -89,7 +87,7 @@ describe("resetPassword() – branch coverage", () => {
       repeat: "NewPass1!",
     };
     resetPassword()(req, res, next);
-    expect(next).to.have.been.calledOnce;
+    expect(next.calledOnce).to.equal(true);
     expect(next.args[0][0]).to.be.instanceOf(Error);
     expect(next.args[0][0].message).to.include("Blocked illegal activity");
   });

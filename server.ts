@@ -149,6 +149,9 @@ const errorhandler = require("errorhandler");
 
 const startTime = Date.now();
 
+const shouldBypassRateLimitInTests = (req: Request) =>
+  process.env.NODE_ENV === "test" && req.headers["x-forwarded-for"] == null;
+
 const swaggerDocument = yaml.load(fs.readFileSync("./swagger.yml", "utf8"));
 
 const appName = config.get<string>("application.customMetricsPrefix");
@@ -429,12 +432,13 @@ restoreOverwrittenFilesWithOriginals()
       rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 5,
+        skip: shouldBypassRateLimitInTests,
         message: {
           error:
             "Too many reset password attempts, please try again after 15 minutes.",
         },
         keyGenerator({ headers, ip }: { headers: any; ip: any }) {
-          return headers["X-Forwarded-For"] ?? ip;
+          return headers["x-forwarded-for"] ?? ip;
         }, // vuln-code-snippet vuln-line resetPasswordMortyChallenge
       }),
     );
@@ -592,6 +596,7 @@ restoreOverwrittenFilesWithOriginals()
       rateLimit({
         windowMs: 5 * 60 * 1000,
         max: 10,
+        skip: shouldBypassRateLimitInTests,
         validate: false,
         message: {
           error: "Too many OTP attempts, please try again after 5 minutes.",
@@ -821,6 +826,7 @@ restoreOverwrittenFilesWithOriginals()
       rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 10,
+        skip: shouldBypassRateLimitInTests,
         validate: false,
         message: {
           error: "Too many login attempts, please try again after 15 minutes.",

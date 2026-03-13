@@ -12,35 +12,45 @@ const REST_URL = "http://localhost:3000/rest";
 const jsonHeader = { "content-type": "application/json" };
 
 // Helper: wrap frisby thành Promise chuẩn để dùng với async/await
-function send(
+async function send(
   url: string,
   headers: Record<string, string>,
   body: Record<string, unknown>,
 ): Promise<void> {
-  return new Promise((resolve) => {
+  await new Promise<void>((resolve) => {
     frisby.post(url, { headers, body }).then(
-      () => resolve(),
-      () => resolve(),
+      () => {
+        resolve();
+      },
+      () => {
+        resolve();
+      },
     );
   });
 }
 
 // Helper: wrap frisby + kiểm tra status code, reject nếu sai
-function sendExpect(
+async function sendExpect(
   url: string,
   headers: Record<string, string>,
   body: Record<string, unknown>,
   expectedStatus: number,
   checkJsonTypes?: Record<string, unknown>,
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     let spec = frisby
       .post(url, { headers, body })
       .expect("status", expectedStatus);
-    if (checkJsonTypes != null) spec = spec.expect("jsonTypes", checkJsonTypes);
+    if (checkJsonTypes != null) {
+      spec = spec.expect("jsonTypes", checkJsonTypes);
+    }
     spec.then(
-      () => resolve(),
-      (err: unknown) => reject(err),
+      () => {
+        resolve();
+      },
+      (err: unknown) => {
+        reject(err);
+      },
     );
   });
 }
